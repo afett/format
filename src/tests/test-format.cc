@@ -43,6 +43,16 @@ void test::simple_test()
 	}
 
 	{
+		auto str = Fmt::format("%%");
+		CPPUNIT_ASSERT_EQUAL(std::string("%%"), str);
+	}
+
+	{
+		auto str = Fmt::format("%% %s", 1);
+		CPPUNIT_ASSERT_EQUAL(std::string("% 1"), str);
+	}
+
+	{
 		auto str = Fmt::format("foo bar %");
 		CPPUNIT_ASSERT_EQUAL(std::string("foo bar %"), str);
 	}
