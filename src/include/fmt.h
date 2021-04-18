@@ -33,40 +33,45 @@ namespace Fmt {
 template <typename... Args>
 std::string format(std::string const& fmt_str, Args ...args)
 {
-	auto stringer = std::initializer_list<std::function<void(std::ostream &, int)>>{
-		[&args]() { return [&args](std::ostream & os, int c) {
-			switch (c) {
-			case 'x':
-				os << "0x" << std::hex << args << std::dec;
-				break;
-			default:
-				os << args;
-			}
-		}; }()...
-	};
-
-	auto do_fmt{false};
-	auto to_string(std::begin(stringer));
 	std::stringstream ss;
-	for (auto c : fmt_str) {
-		if (to_string == std::end(stringer)) {
-			ss << c;
-			continue;
-		}
-
-		if (c == '%') {
-			if (std::exchange(do_fmt, !do_fmt)) {
-				ss << c;
+	auto fmt = std::begin(fmt_str);
+	auto end = std::end(fmt_str);
+	([&fmt, end, &ss](auto arg) {
+		auto do_fmt{false};
+		while (fmt != end) {
+			if (do_fmt) {
+				if (*fmt == '%') {
+					do_fmt = false;
+				} else {
+					break;
+				}
+			} else if (*fmt == '%') {
+				do_fmt = true;
+				++fmt;
+				continue;
 			}
-			continue;
+			ss << *fmt++;
 		}
 
-		if (std::exchange(do_fmt, false)) {
-			(*to_string++)(ss, c);
-			continue;
+		if (fmt == end) {
+			if (do_fmt == true) {
+				ss << '%';
+			}
+			return;
 		}
 
-		ss << c;
+		switch(*fmt) {
+		case 'x':
+			ss << "0x" << std::hex << arg << std::dec;
+			break;
+		default:
+			ss << arg;
+		}
+		++fmt;
+	}(args), ...);
+
+	while (fmt != end) {
+		ss << *fmt++;
 	}
 
 	return ss.str();
